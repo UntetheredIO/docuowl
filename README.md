@@ -1,5 +1,4 @@
 # 🦉 Docuowl
-
 Docuowl generates a static single-page documentation from Markdown files
 
 ## Rationale
@@ -13,19 +12,22 @@ Looking for a demo? A simple demo is available at [https://docuowl.github.io/dem
 
 <center><img width="1316" alt="Docuowl Screenshot" src="https://user-images.githubusercontent.com/77198/115077959-49e68980-9ed5-11eb-9949-acd47a2e0cb6.png"></center>
 
-## Installing
-
-### Brew
-
-To install Docuowl using [Homebrew](https://brew.sh), execute the following command:
+## Building
+Building Docuowl requires Go 1.20 or newer, as well as the [Dart SASS Embedded](https://github.com/sass/dart-sass-embedded/releases)
+binary.  Download the binary and place it inside a new `dartsass` directory inside the root so that the
+`dart-Once you have both, run this command in bash to build Docuowl:
 
 ```bash
-brew install docuowl/tap/docuowl
+export PATH=$PATH:./dartsass
 ```
-
-### Manually
-Refer to the [releases](https://github.com/docuowl/docuowl/releases) page to get
-the latest version.
+Or this command in PowerShell:
+```powershell
+$env:Path += "./dartsass"
+```
+Finally, build the project using make:
+```
+make
+```
 
 ## Documentation Organization
 Docuowl takes a directory as input. The directory is expected to have one

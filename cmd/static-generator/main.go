@@ -1,40 +1,50 @@
 package main
 
 import (
-	"bytes"
+	"github.com/bep/godartsass"
+	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
-	"github.com/wellington/go-libsass"
 )
 
 func generateCSS() error {
-	input, err := os.Open("./static/scss/style.scss")
+	input, err := os.ReadFile("./static/scss/style.scss")
+
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to read scss file")
 	}
-	var buffer bytes.Buffer
 
 	currentDir, err := filepath.Abs("./static/scss")
-	if err != nil {
-		return err
-	}
-	comp, err := libsass.New(&buffer, input,
-		libsass.OutputStyle(libsass.COMPRESSED_STYLE),
-		libsass.IncludePaths([]string{currentDir}))
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get current directory")
 	}
 
-	if err := comp.Run(); err != nil {
-		return err
+	transpiler, err := godartsass.Start(godartsass.Options{})
+
+	if err != nil {
+		return errors.Wrap(err, "failed to start sass transpiler")
 	}
 
-	if err = os.WriteFile("./static/style.min.css", buffer.Bytes(), os.ModePerm); err != nil {
-		return err
+	defer func() {
+		_ = transpiler.Close()
+	}()
+
+	comp, err := transpiler.Execute(godartsass.Args{
+		Source:       string(input),
+		OutputStyle:  godartsass.OutputStyleCompressed,
+		IncludePaths: []string{currentDir},
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "failed to compile scss")
+	}
+
+	if err = os.WriteFile("./static/style.min.css", []byte(comp.CSS), os.ModePerm); err != nil {
+		return errors.Wrap(err, "failed to write css file")
 	}
 
 	return nil
@@ -42,9 +52,11 @@ func generateCSS() error {
 
 func compileJS(from, to string, mangle bool) error {
 	input, err := os.ReadFile(from)
+
 	if err != nil {
 		return err
 	}
+
 	result := api.Transform(string(input), api.TransformOptions{
 		MinifyIdentifiers: mangle,
 		MinifySyntax:      true,
@@ -64,6 +76,7 @@ func generateJS() error {
 		{from: "toggle_menu.js", mangle: true},
 		{from: "owl_wasm.js", mangle: false},
 	}
+
 	for _, meta := range funcs {
 		minJS := strings.TrimSuffix(meta.from, ".js") + ".min.js"
 
@@ -71,14 +84,17 @@ func generateJS() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func main() {
 	var err error
+
 	if err = generateCSS(); err != nil {
 		panic(err)
 	}
+
 	if err = generateJS(); err != nil {
 		panic(err)
 	}

@@ -18,7 +18,6 @@ import (
 const version = "0.2.3"
 
 func main() {
-
 	app := cli.App{
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -96,6 +95,7 @@ func main() {
 		},
 	}
 	err := app.Run(os.Args)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -103,6 +103,7 @@ func main() {
 
 func render(lang, input, output string, noFTS bool) error {
 	tree, err := fs.Walk(input)
+
 	if err != nil {
 		return fmt.Errorf("error scanning %s: %w", input, err)
 	}
@@ -112,13 +113,17 @@ func render(lang, input, output string, noFTS bool) error {
 	sidebar := parts.MakeSidebar(tree, version, noFTS)
 	rendered := parts.RenderItems(tree, ftsInst)
 	index, err := ftsInst.Serialize()
+
 	if err != nil {
 		return fmt.Errorf("error serialising FTS index: %w", err)
 	}
+
 	head := parts.MakeHead(index, noFTS)
+
 	if err = os.MkdirAll(output, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating directories for %s: %w", output, err)
 	}
+
 	if err = os.WriteFile(output+"/index.html", []byte(head+sidebar+rendered), os.ModePerm); err != nil {
 		return fmt.Errorf("error writing %s: %w", output+"/index.html", err)
 	}
@@ -126,6 +131,7 @@ func render(lang, input, output string, noFTS bool) error {
 	if noFTS {
 		return nil
 	}
+
 	if err = os.WriteFile(output+"/owl_wasm.js", static.WASMLoader, os.ModePerm); err != nil {
 		return fmt.Errorf("error writing %s: %s", output+"/owl_wasm.js", err)
 	}
@@ -133,5 +139,6 @@ func render(lang, input, output string, noFTS bool) error {
 	if err = os.WriteFile(output+"/owl_wasm_bg.wasm", static.WASMBinary, os.ModePerm); err != nil {
 		return fmt.Errorf("error writing %s: %s", output+"/owl_wasm_bg.wasm", err)
 	}
+
 	return nil
 }
